@@ -171,12 +171,30 @@ def run():
     train_size_normal = 500
     train_size_anomalous = 0
 
-    for filter_c in (fe.COMMON_FILTER_CONSTRAINTS['R'], {}):
-        df = do_one_class(random_state, train_size_normal, train_size_anomalous, filter_c)
-        df.insert(0, 'filter_c', str(filter_c))
+    label_1 = 'Using only whole request as string'
+    df1 = do_one_class(
+        random_state,
+        train_size_normal,
+        train_size_anomalous,
+        fe.COMMON_FILTER_CONSTRAINTS['R'])
 
-        print()
-        print('params {:30s} | f_score {:4.2f} {:4.2f} {:4.2f}'.format(
-            str(filter_c), df['f_score'].max(), df['f_score'].mean(), df['f_score'].min()))
-        print('mean', df['TPR'].mean(), df['FPR'].mean(), df['f_score'].mean())
-        print(df.loc[:, ['filter_c', 'n_features', 'nu', 'gamma', 'TPR', 'FPR', 'f_score']])
+    label_2 = 'Including analysis of parameter values'
+    df2 = do_one_class(
+        random_state,
+        train_size_normal,
+        train_size_anomalous,
+        {})
+
+    cols = ['n_features', 'nu', 'gamma', 'TPR', 'FPR', 'f_score']
+    print()
+    print(label_1)
+    print(df1.loc[:, cols])
+    print()
+    print(label_2)
+    print(df2.loc[:, cols])
+
+    print()
+    print('{:40s} | {:40s} | {:40s}'.format(
+        '', 'average f1-score of all 18 groups', 'best f1-score of all 18 groups'))
+    print('{:40s} | {:40.2f} | {:40.2f}'.format(label_1, df1['f_score'].mean(), df1['f_score'].max()))
+    print('{:40s} | {:40.2f} | {:40.2f}'.format(label_2, df2['f_score'].mean(), df2['f_score'].max()))
