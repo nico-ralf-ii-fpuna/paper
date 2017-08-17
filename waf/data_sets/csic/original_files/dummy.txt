@@ -1,1 +1,8 @@
 This file is necessary so that this folder is included in the VCS.
+
+The content of this folder should look like this:
+original_files
+        ├── anomalousTrafficTest.txt
+        ├── dummy.txt
+        ├── normalTrafficTest.txt
+        └── normalTrafficTraining.txt
