@@ -1,6 +1,6 @@
 # Paper
 
-_Code for paper we submitted to the ERRC 2017 conference in Santa Maria, Brazil._
+_Code for paper we submitted to the [ERRC 2017](http://coral.ufsm.br/errc2017/) conference in Santa Maria, Brazil._
 
 This is a simple implementation of a Web Application Firewall (WAF) based on Anomaly Detection using One Class SVM.
 

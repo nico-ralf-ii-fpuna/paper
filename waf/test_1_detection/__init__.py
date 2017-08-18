@@ -196,5 +196,7 @@ def run():
     print()
     print('{:40s} | {:40s} | {:40s}'.format(
         '', 'average f1-score of all 18 groups', 'best f1-score of all 18 groups'))
-    print('{:40s} | {:40.2f} | {:40.2f}'.format(label_1, df1['f_score'].mean(), df1['f_score'].max()))
-    print('{:40s} | {:40.2f} | {:40.2f}'.format(label_2, df2['f_score'].mean(), df2['f_score'].max()))
+    print('{:40s} | {:31.2f} +/- {:4.2f} | {:40.2f}'.format(
+        label_1, df1['f_score'].mean(), df1['f_score'].std(), df1['f_score'].max()))
+    print('{:40s} | {:31.2f} +/- {:4.2f} | {:40.2f}'.format(
+        label_2, df2['f_score'].mean(), df2['f_score'].std(), df2['f_score'].max()))
