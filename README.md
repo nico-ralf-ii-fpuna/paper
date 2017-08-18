@@ -19,8 +19,8 @@ can be used to install them_.
 _In Ubuntu using `pip` should just work fine_.
 
 ### Download necessary data sets
-    - Paste files from [CSIC 2010 HTTP data sets](http://www.isi.csic.es/dataset/) into `/waf/data_sets/csic/original_files/`
-    - Paste files from [CSIC Torpeda 2012 HTTP data sets](http://www.tic.itefi.csic.es/torpeda/datasets.html) into `/waf/data_sets/torpeda/original_files/`
+- Paste files from [CSIC 2010 HTTP data sets](http://www.isi.csic.es/dataset/) into `/waf/data_sets/csic/original_files/`
+- Paste files from [CSIC Torpeda 2012 HTTP data sets](http://www.tic.itefi.csic.es/torpeda/datasets.html) into `/waf/data_sets/torpeda/original_files/`
 
 ### Run the code
    Use the `run.py` file to run the different tests.
