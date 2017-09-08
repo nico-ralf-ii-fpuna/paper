@@ -1,0 +1,58 @@
+\documentclass[12pt]{article}
+
+
+\usepackage[utf8]{inputenc}
+\usepackage{sbc-template}
+\usepackage{graphicx}
+\usepackage{tabularx}
+\newcolumntype{C}{>{\centering\arraybackslash}X}    % centered flexible tabularX column
+\usepackage{url}
+\renewcommand{\UrlFont}{\ttfamily\small}
+\urldef{\TheRepoUrl}\url{https://github.com/nico-ralf-ii-fpuna/paper}
+
+
+\sloppy
+
+
+\title{
+    Anomaly-based Web Application Firewall using
+    HTTP-specific features and One-Class SVM
+}
+\author{
+    Nico Epp\inst{1},
+    Ralf Funk\inst{1},
+    Cristian Cappo\inst{1}
+}
+\address{
+    Facultad Politécnica -- Universidad Nacional de Asunción\\
+    San Lorenzo -- Paraguay
+    \email{
+        \{nicoeppfriesen,ralffunk0\}@gmail.com, ccappo@pol.una.py
+    }
+}
+
+
+\begin{document} 
+    \maketitle
+
+    \begin{abstract}
+        Vulnerabilities in web applications pose great risks because they
+        can be exploited by malicious attackers through the Internet.
+        Web Application Firewalls placed in front of these applications
+        can help to minimize these risks.
+        In this paper, we present such a firewall based on anomaly detection
+        that aims to detect anomalous HTTP requests using One Class SVM
+        classifier.
+        Our work uses expert knowledge about the HTTP request structure to
+        build feature extraction methods that improve the detection rates.
+        We include a link to the online repository that contains the code
+        of our implementation for the purpose of reproducibility and
+        extensibility.
+    \end{abstract}
+
+    % the command '\include' adds pagebreaks, so we use '\input' instead
+    \input{p_content}
+
+    \bibliography{p_references}
+    \bibliographystyle{sbc}
+\end{document}
