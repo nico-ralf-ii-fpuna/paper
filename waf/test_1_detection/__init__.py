@@ -9,6 +9,8 @@ import os
 import numpy as np
 import pandas as pd
 from sklearn.externals import joblib
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler, Normalizer
 from sklearn.svm import OneClassSVM
 from typing import List, Tuple
 from ..base import BASE_PATH
@@ -112,7 +114,7 @@ def result_list_to_df(result_list: List) -> pd.DataFrame:
 
 
 def classify(ds_url, random_state, train_size_normal, train_size_anomalous, filter_constraints,
-             clf_kwargs):
+             use_scaler, use_normalizer, clf_kwargs):
     # get samples
     df = fe.get(ds_url, random_state, train_size_normal, train_size_anomalous)
     if filter_constraints:
@@ -120,8 +122,14 @@ def classify(ds_url, random_state, train_size_normal, train_size_anomalous, filt
     X_train, y_train_true, X_test, _ = fe.feature_numbers(df)
 
     # make and fit classifier
+    step_list = []
+    if use_scaler:
+        step_list.append(StandardScaler())
+    if use_normalizer:
+        step_list.append(Normalizer())
     clf_kwargs.setdefault('random_state', 0)        # for reproducibility of the results
-    clf = OneClassSVM(**clf_kwargs)
+    step_list.append(OneClassSVM(**clf_kwargs))
+    clf = make_pipeline(*step_list)
     clf.fit(X_train, y_train_true)
 
     # add column with predicted labels
@@ -134,7 +142,8 @@ def classify(ds_url, random_state, train_size_normal, train_size_anomalous, filt
 
 
 @_file_memory.cache
-def do_one_class(random_state, train_size_normal, train_size_anomalous, filter_constraints):
+def do_one_class(random_state, train_size_normal, train_size_anomalous, filter_constraints,
+                 use_scaler, use_normalizer):
     df_list = []
     for ds_url in data_sets.DS_URL_LIST:
         for nu in (0.1, 0.01, 0.001, 0.0001):
@@ -145,6 +154,8 @@ def do_one_class(random_state, train_size_normal, train_size_anomalous, filter_c
                     train_size_normal=train_size_normal,
                     train_size_anomalous=train_size_anomalous,
                     filter_constraints=filter_constraints,
+                    use_scaler=use_scaler,
+                    use_normalizer=use_normalizer,
                     clf_kwargs={'nu': nu, 'gamma': gamma})
 
                 result_line = get_result_line(df)
@@ -171,32 +182,54 @@ def run():
     train_size_normal = 500
     train_size_anomalous = 0
 
-    label_1 = 'Using only whole request as string'
-    df1 = do_one_class(
-        random_state,
-        train_size_normal,
-        train_size_anomalous,
-        fe.COMMON_FILTER_CONSTRAINTS['R'])
-
-    label_2 = 'Including analysis of parameter values'
-    df2 = do_one_class(
-        random_state,
-        train_size_normal,
-        train_size_anomalous,
-        {})
+    scenario_list = (
+        {
+            'label': 'Using only whole request as string',
+            'filter_constraints': fe.COMMON_FILTER_CONSTRAINTS['R'],
+            'scaler_normalizer': False,
+        },
+        {
+            'label': 'Including analysis of parameter values',
+            'filter_constraints': {},
+            'scaler_normalizer': False,
+        },
+        {
+            'label': 'Using only whole request as string',
+            'filter_constraints': fe.COMMON_FILTER_CONSTRAINTS['R'],
+            'scaler_normalizer': True,
+        },
+        {
+            'label': 'Including analysis of parameter values',
+            'filter_constraints': {},
+            'scaler_normalizer': True,
+        },
+    )
+    for scenario in scenario_list:
+        df = do_one_class(
+            random_state=random_state,
+            train_size_normal=train_size_normal,
+            train_size_anomalous=train_size_anomalous,
+            filter_constraints=scenario['filter_constraints'],
+            use_scaler=scenario['scaler_normalizer'],
+            use_normalizer=scenario['scaler_normalizer'])
+        scenario['df'] = df
 
     cols = ['n_features', 'nu', 'gamma', 'TPR', 'FPR', 'f_score']
-    print()
-    print(label_1)
-    print(df1.loc[:, cols])
-    print()
-    print(label_2)
-    print(df2.loc[:, cols])
+    for scenario in scenario_list:
+        print()
+        print(scenario['label'], '| scaler_normalizer', scenario['scaler_normalizer'])
+        print(scenario['df'].loc[:, cols])
 
     print()
-    print('{:40s} | {:40s} | {:40s}'.format(
-        '', 'average f1-score of all 18 groups', 'best f1-score of all 18 groups'))
-    print('{:40s} | {:31.2f} +/- {:4.2f} | {:40.2f}'.format(
-        label_1, df1['f_score'].mean(), df1['f_score'].std(), df1['f_score'].max()))
-    print('{:40s} | {:31.2f} +/- {:4.2f} | {:40.2f}'.format(
-        label_2, df2['f_score'].mean(), df2['f_score'].std(), df2['f_score'].max()))
+    print('{:40s} | {:25s} | {:45s} | {:25s}'.format(
+        '', 'scaler and normalizer', 'average of all 18 groups', 'best of all 18 groups'))
+    print('{:40s} | {:25s} | {:13s} | {:13s} | {:13s} | {:25s}'.format(
+        '', '', 'TPR', 'FPR', 'f1-score', 'f1-score'))
+    for scenario in scenario_list:
+        print('{:40s} | {:25s} | {:4.2f} +/- {:4.2f} | {:4.2f} +/- {:4.2f} | {:4.2f} +/- {:4.2f} | {:25.2f}'.format(
+            scenario['label'],
+            str(scenario['scaler_normalizer']),
+            scenario['df']['TPR'].mean(), scenario['df']['TPR'].std(),
+            scenario['df']['FPR'].mean(), scenario['df']['FPR'].std(),
+            scenario['df']['f_score'].mean(), scenario['df']['f_score'].std(),
+            scenario['df']['f_score'].max()))
