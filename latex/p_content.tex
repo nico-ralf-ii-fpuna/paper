@@ -1,9 +1,8 @@
 \section{Introduction}
 
-Web applications have become mainstream in the last decade.
-Their vulnerabilities pose a great risk because since the applications
-are accessible through the Internet, these vulnerabilities can easily be
-exploited by malicious attackers.
+Web applications have become mainstream in the last decade. Their
+vulnerabilities pose a great risk because they can easily be exploited
+by malicious attackers through the Internet.
 Web Application Firewalls (WAF) can be placed in front of these
 applications to minimize the risk of attacks \cite{torranoGimenez2015study}.
 
@@ -16,8 +15,8 @@ In order to accomplish this differentiation task, the WAF needs to recognize
 characteristics about the individual HTTP requests.
 This kind of WAF has two phases, namely training and detection.
 During the training phase, it extracts models from observed normal requests.
-During the detection phase, it compares the incoming traffic to these models
-and flags requests as anomalous if they deviate significantly from normal
+During the detection phase, it compares the incoming requests to these models
+and flags them as anomalous if they deviate significantly from normal
 requests previously seen.
 A great strength of this approach lies with the fact that the WAF only needs
 to be retrained if there are changes in the applications it protects
@@ -25,30 +24,21 @@ and not because of the appearance of new attacks \cite{kruegel2003anomaly}.
 
 For the anomaly detection process of the WAF, one possible strategy is to
 face it as a classification problem with a single positive class,
-denominated One Class Classification (OCC) problem \cite{khan2009survey}.
+denominated One Class Classification (OCC) problem \cite{khan2014one}.
 This way the normal HTTP requests belong to this single positive class and
 all the anomalies will be categorized as not belonging to this class.
 This OCC approach has the advantage of not needing labeled anomalous data
 for training, only normal requests are required.
 One methodology to solve OCC problems is to employ tools from the area of
 Machine Learning, one of those being the \textit{One-Class} SVM, which has
-been used with great success for this kind of problems \cite{khan2009survey}.
+been used with great success for this kind of problems \cite{khan2014one}.
+The characteristics of HTTP requests need to be expressed as numeric
+feature vectors in order to be used by this classifier.
 
-For the WAF to be able to recognize the characteristics of HTTP requests,
-these features need to be expressed in a format that the employed tools
-can process.
-For instance, the \textit{One-Class} SVM cannot work directly with raw data
-and it requires a data preprocessing step.
-This step transforms the features of the input requests as numeric feature
-vectors, which are then passed to the \textit{One-Class} SVM.
-Expert knowledge about HTTP requests and current attacks can help in selecting
-the most useful features for the classification process between normal and
-anomalous requests \cite{kruegel2003anomaly}.
-
-In this article we present a WAF based on anomaly detection that uses features
-selected with expert knowledge about HTTP requests and also uses
+In this article, we present a WAF based on anomaly detection that uses
+features selected with expert knowledge about HTTP requests and also uses
 \textit{One-Class} SVM classifier to detect anomalous requests.
-In Section \ref{chap:related_works} we present some related works, in Section
+In Section \ref{chap:related_works} we present related works, in Section
 \ref{chap:proposal} we describe our proposed WAF, Section \ref{chap:results}
 contains our test results and we finish this paper with some conclusions and
 ideas for future work in Section \ref{chap:conclusions}.
@@ -62,20 +52,34 @@ expert knowledge about the structure of HTTP requests in their anomaly
 detection system.
 They describe how the query string of an HTTP request consists of an ordered
 list of $n$ pairs of parameters and their corresponding values and how
-they use stochastic methods to build anomaly models of the values for
+they use statistical methods to build anomaly models of the values for
 each of the parameters. Some of the models they use are the length of the
 values, their character distribution, structural inference, parameter
 presence, among others.
 For example, one of their models describes the string length of the different
 values that appear for the parameter \textit{username} in the URL
 \textit{/login}.
+The approach of these authors differs from ours in that they use statistical
+methods to detect anomalous requests while we employ \textit{One-Class} SVM.
+Similar HTTP features and statistical detection methods are used in
+\cite{torranoGimenez2015study}.
 
 The \textit{One-Class} SVM has been used successfully in many areas,
 including text classification, face recognition, spam detection, anomaly
-detection, among others \cite{khan2009survey}.
-The authors in \cite{parhizkar2015oc} use this classifier to successfully
-detect anomalies in web traffic, but their approach differs from ours in
-that they extract a fixed number of features of the requests.
+detection, among others \cite{khan2014one}.
+In \cite{tran2004one}, network traffic statistics are computed with
+\textit{tcpstat} and fed to a \textit{One-Class} SVM to detect anomalous
+network packets.
+In \cite{perdisci2006using}, byte \textit{n}-grams are extracted of the
+payload of network packets and passed to an ensemble of \textit{One-Class}
+SVMs to detect mimicry attacks.
+The authors in \cite{parhizkar2015oc} extract a fixed number of features
+from HTTP requests and use an ensemble of \textit{One-Class} SVMs to
+detect attacks in web traffic. This last paper also uses the same data
+sets we employ, and later we compare our results with theirs.
+It is worth noting that the three cited works use a fixed number of
+features, while in our WAF this number depends on the quantity of parameters
+in the training data.
 
 
 \section{Proposal}
@@ -107,22 +111,21 @@ considered normal in other groups.
 Our data preprocessing step extracts a vector of numeric features from
 each HTTP request, which is then passed to the classification step.
 We use feature extraction methods that yield a total of 10 numeric features.
-Our first feature represents the length or character count, the second
-counts the number of digits, the third the number of alphabetical
-characters and the fourth counts the number of characters that are not
-alphanumerical. We based these features on \cite{kruegel2003anomaly} and
-added some extensions.
-The next five features represent five bins of a method called character
-distribution, also based on \cite{kruegel2003anomaly}.
-Our tenth and last feature represents the entropy according to Shannon
+Four of our features indicate total length, number of digits, number of
+letters and number of non-alphanumerical characters. We based these
+on \cite{kruegel2003anomaly} and \cite{nguyen2011application}, adding
+some own extensions.
+Another five features, also based on \cite{kruegel2003anomaly}, represent
+the bins of a method called character distribution.
+Our last feature represents the entropy according to Shannon
 \cite{encyMathEntropy}, an idea taken from \cite{nguyen2011application}.
 
-Our feature extraction methods are applied on the whole request,
-including HTTP method, URL, query string, headers and body.
+Our feature extraction methods are applied to the whole request,
+including HTTP method, URL, query string, headers, and body.
 Additionally, we employ the previously mentioned approach used in
 \cite{kruegel2003anomaly} and apply our extraction methods on each of the
 parameter values in the query string. We extend this approach to also
-analyze the parameter values in the body of the requests, if there are any.
+analyze the parameter values in the body of the requests if there are any.
 
 The obtained feature vector that represents a request will have
 $m \times (1 + n)$ features.
@@ -132,7 +135,7 @@ The $1$ represents the whole request and $n$ is the number of parameters
 that are present in the query string and body.
 Its important to note that $n$ might be different for each group of URL
 and HTTP method.
-During the training phase, all the different parameters from a set of
+During the training phase, all the different parameters from a group of
 requests are listed and given a fixed order for building the feature vector.
 This way, during the detection phase our WAF extracts the features of the
 values whose parameters have been seen in the training phase, assuring that
@@ -146,15 +149,16 @@ We are aware that our analysis of parameter values during the detection
 phase is only applied to parameters observed in training.
 This gives way to the risk of an intruder including an attack inside the
 value of a previously unseen parameter.
-But since our feature extraction methods are also applied on the whole
-request, these attacks can still be detected.
+But since our feature extraction methods are also applied to the whole
+request, these attacks can still be detected and do not simply bypass
+our WAF.
 
 
 \subsection{Classification step}
 
-During the training phase, our WAF trains one \textit{One-Class} SVM
-classifier for each group of URL and HTTP method, using the numeric
-feature vectors produced by the previous step.
+During the training phase, our WAF scales and normalizes the numeric feature
+vectors produced by the previous step and trains one \textit{One-Class} SVM
+classifier for each group of URL and HTTP method.
 In this high dimensional vector space, the classifier tries to find boundaries
 to the regions in which the feature vectors of normal request reside,
 drawing these borders as tight as possible to exclude future vectors of
@@ -190,27 +194,24 @@ influences the shape of the boundaries \cite{tran2004one}.
 \subsection{Response step}
 
 Our WAF can be configured to respond in different ways to the classification
-results. If the HTTP requests are considered normal, no further action
-needs to be taken apart from forwarding them to their intended destination.
-However, if our classification step considered a request as anomalous,
-the WAF logs the result and optionally can also block that request,
-preventing possible attacks from even reaching the protected web applications.
-Our implementation could be extended to take different actions, for
-example sending alarms about anomalies to the people responsible
-for the system.
+results. If a request is considered normal, it is forwarded to its intended
+destination. Otherwise, the WAF logs the result and optionally can also
+block that request, preventing possible attacks from reaching the applications.
+Our implementation could be extended, for example, to send alarms about
+anomalies to the people responsible for the system.
 
 
 \section{Experiments and results}
 \label{chap:results}
 
-For the quantitative evaluation of the performance of our WAF we used the
+For the quantitative evaluation of the performance of our WAF, we used the
 public data sets CSIC 2010 \cite{csic2010dataset} and CSIC TORPEDA 2012
-\cite{torpeda2012dataset}, which contain labeled samples of simulated
-HTTP traffic to an e-commerce web application.
+\cite{torpeda2012dataset}, which contain labeled HTTP requests to an
+e-commerce web application.
 Given that our WAF groups the requests by URL and HTTP method, we grouped
-the available data from both data sets by these criteria and selected
-those groups that had more than 100 samples of each of the two categories,
-normal and anomalous requests.
+the requests from both data sets by these criteria and selected those
+groups that had more than 100 samples of each of the two categories,
+normal and anomalous.
 This left us with 18 groups, totaling 40,130 normal and 42,444 anomalous
 HTTP requests.
 
@@ -219,101 +220,109 @@ HTTP requests.
 
 In a first test, we used the aforementioned data to measure the detection
 effectiveness of our WAF.
-To demonstrate the added value of analyzing the parameter values,
-we tested two different scenarios.
-In the first scenario, we applied our feature extraction methods only to
-the whole request, obtaining a fixed number of 10 features.
-The second scenario included the analysis of the parameter values, yielding
-a different number of features for each group, as described in the previous
-section.
-Additionally, for the selection of the values for the parameters $\nu$
-and $\gamma$ of the classifier within each group, we tested a few values
-in the range $[0.0001: 0.1]$ and chose those values that gave the best
-result in each individual group.
+To demonstrate the added value of analyzing the parameter values, we
+tested two different scenarios. Firstly, we applied our feature extraction
+methods only to the whole request, obtaining a fixed number of 10 features.
+Secondly, we included the analysis of parameter values, yielding different
+number of features for each group, as described in the previous section.
+Additionally, for the selection of $\nu$ and $\gamma$ for each group,
+we tested values in the range $[0.0001: 0.1]$ and chose those that gave
+the best result in each group.
+Table \ref{tbl:test_1_results} shows average and standard deviation of
+true positive rate (TPR), false positive rate (FPR) and $F_{1}$ score
+of our results. $F_{1}$ score uses the number of true positives (TP),
+false positives (FP) and false negatives (FN), and it is expressed as
+$ F_{1} = \frac{2TP}{2TP + FP + FN} $,
+where values closer to 1 indicate better results.
 
-To compare the results we employ the $F_{1}$ score, which uses the number
-of true positives ($TP$), false positives ($FP$) and false negatives ($FN$)
-obtained in the classification process.
-This measure can be expressed as $ F_{1} = \frac{2TP}{2TP + FP + FN} $
-and values closer to 1 indicate better results.
-
-Table \ref{tbl:test_1_results} shows that the second scenario improves
-the average $F_{1}$ from $0.83$ to $0.90$ compared to the first,
-demonstrating the value of using the analysis of parameter values.
-We can also observe that the second scenario achieves a perfect score
-of $1.00$ for one of the 18 groups, while the first scenario does not
-get that high for any of the groups.
-
-\begin{table}[t]
+\begin{table}[!b]
     \centering
     \caption{Results of detection effectiveness test for all 18 groups}
     \label{tbl:test_1_results}
 
-    \begin{tabularx}{\linewidth}{|c|C|C|}
+    \small
+    \begin{tabularx}{\linewidth}{|C|c|c|c|c|}
         \hline
-        Scenario                               & average $F_{1}$ & best $F_{1}$ \\ \hline
-        Using only whole request               & $0.83 \pm 0.09$ & $0.95$       \\ \hline
-        Including analysis of parameter values & $0.90 \pm 0.08$ & $1.00$       \\ \hline
+        Scenario                     & average TPR   & average FPR   & average $F_{1}$ & best $F_{1}$ \\ \hline
+        using only the whole request & $0.91 \pm 0.11$ & $0.31 \pm 0.34$ & $0.82 \pm 0.18$ & $1.00$       \\ \hline
+        including parameter analysis & $0.95 \pm 0.05$ & $0.09 \pm 0.11$ & $0.93 \pm 0.07$ & $1.00$       \\ \hline
     \end{tabularx}
 \end{table}
+
+Our results show that the second scenario improves the overall detection,
+with TPR and $F_{1}$ raising from $0.91$ and $0.82$ to $0.95$ and $0.93$
+respectively and FPR lowering from $0.31$ to $0.09$, even though both
+scenarios have groups that achieve a perfect score.
+These results demonstrate the usefulness of including the analysis of
+parameter values.
+
+Comparing our results with related works that use the same data sets that
+we employ, we find that in \cite{parhizkar2015oc} a TPR of $0.96$ and a
+FPR of $0.03$ is reported for the ensemble of \textit{One-Class} SVMs.
+Two popular \textit{misuse-based} WAFs,
+ModSecurity\footnote{\url{www.modsecurity.org}}
+and PHPIDS\footnote{\small \url{https://github.com/PHPIDS/PHPIDS}},
+were used with default rules on the first data set, CSIC 2010, obtaining
+a TPR of only $0.55$ and $0.29$ respectively \cite{gimenez2015paper},
+significantly lower than the results we achieved with our WAF.
 
 
 \subsection{Response time analysis}
 
 Our second test aimed to quantify the effects our WAF has on the response
 time of the web applications it protects. To that end, we set up a simple
-application and timed the intervals between sending a request and receiving
-the response. This test was run in three different scenarios; in one the
-requests went directly to the application, in the second the traffic was
-routed through our WAF but with detection disabled, and in the third
-scenario with enabled detection.
-The second and third scenarios show an increase of 2 and 3 ms respectively
-when compared to the scenario without the WAF.
+application and measured the response time in three different scenarios;
+in one the requests went directly to the application, in the second the
+traffic was routed through our WAF but with detection disabled, and in
+the third scenario with enabled detection.
+The second and third scenarios show an increase of 2 and 4 ms respectively
+when compared to the scenario without the WAF. This delay is only a small
+increase compared to the overall roundtrip time of HTTP traffic, so our WAF
+should not have noticeable effects on the response time.
 
 
 \subsection{Training time analysis}
 
-In our third test, we analyzed how the training time of our WAF relates to
-the amount of training samples used. Since this measurement is influenced
-by the number of extracted features, each group may have different durations
-and so we took the highest number to get an upper bound.
-We observed that the training time per request stays almost constant at
-3 ms per request in our test setup for up to 10,000 requests.
-This shows that the training time has an almost linear relationship to the
-amount of training data.
+In our third test, we analyzed how the training time of our WAF relates
+to the amount of requests used. Since groups may have different durations
+because of an unequal number of features, the highest numbers give an
+upper bound.
+We observed that the time per request stays close to 2 ms in our test
+setup with 10,000 requests. Our numbers show that the training time has
+an almost linear relationship to the amount of training data.
 
 
 \section{Conclusions}
 \label{chap:conclusions}
 
-The WAF we presented in this article uses the \textit{One-Class} SVM
+The WAF we present in this article uses the \textit{One-Class} SVM
 classifier to tackle the task of detecting anomalous HTTP requests in
 order to protect web applications from possible attacks.
+Following and extending the ideas obtained from other authors, we built
+feature extraction methods that take advantage of the structure of HTTP
+requests, specifically the values of individual parameters, to represent
+these requests with vectors which contain more useful information.
+Our tests show a significant improvement in the detection results when
+including the analysis of parameter values.
+Furthermore, our implementation shows that it is fast enough to be used
+as a WAF, even though the minimization of the processing time was not
+our primary goal and further optimizations could be made.
 
-Following and extending the ideas obtained from the works of other authors,
-we built feature extraction methods that take advantage of the structure of
-HTTP requests to represent these requests with vectors which contain more
-useful information.
-Our test results show a significant improvement in the detection results
-when using this knowledge about the request structure, specifically the
-analysis of parameter values.
-
-One contribution of this paper is the adaptation and extension of the ideas
-in \cite{kruegel2003anomaly} to make feature extraction methods useful for
-Machine Learning tools, in our case specifically the \textit{One-Class} SVM.
+One contribution of our paper is the adaptation and extension of the
+parameter value analysis presented in \cite{kruegel2003anomaly}. The
+anomaly models employed by the cited authors do not produce numeric vectors
+for each request, and so we adapted them to make feature extraction methods
+that are useful for Machine Learning tools, in our case specifically the
+\textit{One-Class} SVM.
 As another contribution, we leave a link in Section \ref{chap:proposal}
 to the online repository that contains the code of our implementation,
 which includes the WAF and the tests mentioned in this paper, so that
 other authors can reproduce our results and have a starting point for
 further research.
-Our implementation shows that it is fast enough to be used as a WAF, even
-though the minimization of the processing time was not our primary goal
-and further optimizations could be made.
 
-Future works could look into finding additional features that help to
-detect anomalous requests.
-Another research area is other classification tools to be used instead
-of the \textit{One-Class} SVM to solve the OCC task.
-Additionally, our work lacks a method for automatic selection of the
-parameters of the classifier and further inquiries can be made in that
-direction.
+Future works could look into finding additional features to detect anomalous
+requests. Another research area is other classification tools to be used instead
+of the \textit{One-Class} SVM to tackle the OCC task.
+Additionally, our work lacks automatic selection of the
+values for $\nu$ and $\gamma$ of the classifier and further inquiries
+can be made in that direction.
