@@ -38,3 +38,6 @@ _In Ubuntu using `pip` should just work fine_.
 - Nico Epp
 - Ralf Funk
 - Cristian Cappo (undergraduate thesis advisor)
+
+## See also
+   Check out our [undergraduate thesis](https://github.com/nico-ralf-ii-fpuna/tfg) (written in spanish).
